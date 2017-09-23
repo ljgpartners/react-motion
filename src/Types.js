@@ -15,12 +15,13 @@ export type SpringHelperConfig = {
   damping?: number,
   precision?: number,
 };
+export type LinearHelperConfig = {
+  velocity?: number,
+};
 // the object returned by `spring(value, yourConfig)`. For internal usage only!
 export type OpaqueConfig = {
   val: number,
-  stiffness: number,
-  damping: number,
-  precision: number,
+  stepper: (secondPerFrame: number, x: number, v: number) => [number, number],
 };
 // your typical style object given in props. Maps to a number or a spring config
 export type Style = {[key: string]: number | OpaqueConfig};

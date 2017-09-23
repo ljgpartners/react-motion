@@ -1,7 +1,6 @@
 /* @flow */
 import mapToZero from './mapToZero';
 import stripStyle from './stripStyle';
-import stepper from './stepper';
 import defaultNow from 'performance-now';
 import defaultRaf from 'raf';
 import shouldStopAnimation from './shouldStopAnimation';
@@ -104,14 +103,15 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
         propsStyle,
         this.state.currentVelocity,
       )) {
-        if (this.wasAnimating && this.props.onRest) {
-          this.props.onRest();
-        }
-
         // no need to cancel animationID here; shouldn't have any in flight
         this.animationID = null;
         this.wasAnimating = false;
         this.accumulatedTime = 0;
+
+        if (this.props.onRest) {
+          this.props.onRest();
+        }
+
         return;
       }
 
@@ -120,7 +120,8 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
       const currentTime = timestamp || defaultNow();
       const timeDelta = currentTime - this.prevTime;
       this.prevTime = currentTime;
-      this.accumulatedTime = this.accumulatedTime + timeDelta;
+      this.accumulatedTime += timeDelta;
+
       // more than 10 frames? prolly switched browser tab. Restart
       if (this.accumulatedTime > msPerFrame * 10) {
         this.accumulatedTime = 0;
@@ -157,24 +158,16 @@ export default class Motion extends React.Component<MotionProps, MotionState> {
           let newLastIdealStyleValue = this.state.lastIdealStyle[key];
           let newLastIdealVelocityValue = this.state.lastIdealVelocity[key];
           for (let i = 0; i < framesToCatchUp; i++) {
-            [newLastIdealStyleValue, newLastIdealVelocityValue] = stepper(
+            [newLastIdealStyleValue, newLastIdealVelocityValue] = styleValue.stepper(
               msPerFrame / 1000,
               newLastIdealStyleValue,
               newLastIdealVelocityValue,
-              styleValue.val,
-              styleValue.stiffness,
-              styleValue.damping,
-              styleValue.precision,
             );
           }
-          const [nextIdealX, nextIdealV] = stepper(
+          const [nextIdealX, nextIdealV] = styleValue.stepper(
             msPerFrame / 1000,
             newLastIdealStyleValue,
             newLastIdealVelocityValue,
-            styleValue.val,
-            styleValue.stiffness,
-            styleValue.damping,
-            styleValue.precision,
           );
 
           newCurrentStyle[key] =
